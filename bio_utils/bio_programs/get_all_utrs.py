@@ -4,6 +4,7 @@ import argparse
 
 import misc.gffread_utils as gffread_utils
 import misc.utils as utils
+import misc.pandas_utils as pandas_utils
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -21,7 +22,7 @@ def main():
 
     utr_info = gffread_utils.get_all_utrs(args.transcripts)
 
-    utils.write_df(utr_info, args.out, index=False)
+    pandas_utils.write_df(utr_info, args.out, index=False)
 
 if __name__ == '__main__':
     main()

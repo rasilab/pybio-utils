@@ -9,6 +9,7 @@ import bio_utils.bam_utils as bam_utils
 import bio_utils.fastx_utils as fastx_utils
 import misc.parallel as parallel
 import misc.utils as utils
+import misc.pandas_utils as pandas_utils
 import misc.logging_utils as logging_utils
 
 logger = logging.getLogger(__name__)
@@ -120,7 +121,7 @@ def main():
     msg = "Writing counts to disk"
     logger.info(msg)
 
-    utils.write_df(length_distribution_df, args.out, index=False)
+    pandas_utils.write_df(length_distribution_df, args.out, index=False)
 
 if __name__ == '__main__':
     main()

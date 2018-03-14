@@ -90,7 +90,7 @@ def get_length_distribution(fastx_file, is_fasta=True):
         A data frame with the columns: length, count
     """
     import collections
-    import misc.utils as utils
+    import misc.pandas_utils as pandas_utils
 
     fastx = get_read_iterator(fastx_file, is_fasta=is_fasta)
 
@@ -100,7 +100,7 @@ def get_length_distribution(fastx_file, is_fasta=True):
         read_len = len(read[1])
         length_distribution[read_len] += 1
 
-    length_distribution_df = utils.dict_to_dataframe(
+    length_distribution_df = pandas_utils.dict_to_dataframe(
         length_distribution,
         key_name='length',
         value_name='count'

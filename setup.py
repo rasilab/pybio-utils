@@ -3,6 +3,7 @@ from setuptools import find_packages, setup
 bio_console_scripts = [
     'bam-to-wiggle=bio_utils.bio_programs.bam_to_wiggle:main',
     'bedx-to-bedy=bio_utils.bio_programs.bedx_to_bedy:main',
+    'bed-to-bigBed=bio_utils.bio_programs.bed_to_bigBed:main',
     'bed12-to-gtf=bio_utils.bio_programs.bed12_to_gtf:main',
     'calculate-bed-overlap=bio_utils.bio_programs.calculate_bed_overlap:main',
     'convert-ccds-to-bed=bio_utils.bio_programs.convert_ccds_to_bed:main',
@@ -30,9 +31,11 @@ bio_console_scripts = [
     'remove-multimapping-reads=bio_utils.bio_programs.remove_multimapping_reads:main',
     'reorder-fasta=bio_utils.bio_programs.reorder_fasta:main',
     'run-bowtie=bio_utils.bio_programs.run_bowtie:main',
+    'run-signalp=bio_utils.bio_programs.run_signalp:main',
+    'run-tmhmm=bio_utils.bio_programs.run_tmhmm:main',
     'split-bed12-blocks=bio_utils.bio_programs.split_bed12_blocks:main',
     'split-long-chromosomes=bio_utils.bio_programs.split_long_chromosomes:main',
-    'subtract-bed=bio_utils.bio_programs.subtract_bed:main',
+    'subtract-bed=bio_utils.bio_programs.subtract_bed:main'
 ]
 
 console_scripts = bio_console_scripts
@@ -42,7 +45,7 @@ def readme():
         return f.read()
 
 setup(name='bio-utils',
-        version='0.2.5',
+        version='0.2.6',
         description="This repo contains python3 bioinformatics utilities I find useful.",
         long_description=readme(),
         keywords="utilities",
@@ -64,7 +67,8 @@ setup(name='bio-utils',
             'openpyxl',
             'graphviz',
             'biopython',
-            'mygene'
+            'mygene',
+            'misc==0.2.8'
         ],
         include_package_data=True,
         test_suite='nose.collector',

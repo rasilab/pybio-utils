@@ -86,12 +86,13 @@ def main():
         col='basename',
         data=distribution_df,
         kind="bar",
+        color="steelblue",
         col_wrap=3,
         size=5,
-        aspect=1.5
+        aspect=1.5,
+        log=True
     )
 
-    g.set_titles("{col_name}")
     g.set_xlabels('Length', fontsize=args.fontsize)
     g.set_ylabels('Count', fontsize=args.fontsize)
 
@@ -103,9 +104,8 @@ def main():
         text = text.replace(".riboseq.cell-type-hela-s3.rep-", " (")
         text = text.replace(".GRCh38_85.fastq", ")")
         ax.title.set_text(text)
-        
-        ax.set_yscale('log')
-        ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
+
+        #ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
 
         ax.set_ylim((1, args.ymax))
         mpl_utils.remove_top_and_right_splines(ax)
@@ -115,10 +115,14 @@ def main():
         mpl_utils.set_ticklabel_rotation(ax, 90)
         mpl_utils.hide_first_y_tick_label(ax)
         
-        
+    # set titles according to different options
+    g.set_titles('{col_name}', size=args.fontsize) 
     if args.title is not None:
-        g.fig.suptitle(args.title, size=args.fontsize, y=1.01)
-
+        if args.basename != "ALL":
+            g.axes.flat[0].set_title(args.title, size=args.fontsize) 
+        else: # manual placement of suptitle
+            g.fig.suptitle(args.title, size=(args.fontsize+4), x=0.35, y=1.065)
+        
     msg = "Writing the plot to disk"
     logger.info(msg)
     g.savefig(args.out)

@@ -1,12 +1,37 @@
 # Change Log
-All notable changes to the misc tools will be documented in this file.
+All notable changes to the bio tools will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/), 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+## [0.2.6] - 2018-03-14
+### Added
+- Added to bio_programs `bed_to_bigBed`, `run_signalp` and `run_tmhmm`.
+
+### Removed
+- Removed deprecated function calls from bio_programs `parse_meme_names`, 
+    `create_mygene_report`, `get_all_utrs`, `get_read_length_distribution`, 
+    `count_reads` and `count_aligned_reads`.
+- Removed deprecated function calls from `bed_utils`.
+- Removed deprecated function calls from 
+    `fastx_utils`, `bam_utils`.
+- Removed deprecated function call from `gtf_utils`.
+
+### Fixed
+- Minor changes to `bio_utils.plotting.plot_read_length_distribution`, 
+    see [ISSUE #87](https://github.com/dieterich-lab/rp-bp/issues/87).
+
+### Added
+- Added *partial support* for GFF3 specifications, in particular this requires removing the
+    STOP codons from the CDSs. Reference annotations file with gff extension are now 
+    treated as GGF3.
+- Handling of additional options passed to star via arguments to `star_utils`. 
+
 ## [0.2.5] - 2017-12-08
 ### Updated
-- Remove deprecated function call from `mygene_utils`
+- Removed deprecated function call from `mygene_utils`
 
 ## [0.2.4] - 2017-10-26
 ### Updated

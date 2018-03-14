@@ -98,17 +98,17 @@ def write_bed(data_frame, filename, compress=True, **kwargs):
             None
 
         Imports:
-            misc.utils
+            misc.pandas_utils
             csv
             gzip (indirectly)
     """
-    import misc.utils
+    import misc.pandas_utils
     import csv
 
     do_not_compress = not compress
 
     header = ['#{}'.format(c) for c in data_frame.columns]
-    misc.utils.write_df(data_frame, filename, index=False, sep='\t', 
+    misc.pandas_utils.write_df(data_frame, filename, index=False, sep='\t', 
         header=header, do_not_compress=do_not_compress, quoting=csv.QUOTE_NONE, **kwargs)
 
 def get_bed_df(bed):

@@ -22,22 +22,24 @@ default_cds_feature = "CDS"
 default_num_cpus = 3
 default_num_groups = 500
 
-offset = len("transcript_id ")
-
-def get_transcript_id(gtf_entry):
+def get_transcript_id(gtf_entry, attr_name, offset, is_quote):
     attributes_str = gtf_entry['attributes']
-    start = attributes_str.find("transcript_id ") + offset
-    
+    start = attributes_str.find(attr_name) + offset
+
     # make sure we actually found the attribute
     if start == offset - 1:
         return None
     
     end = attributes_str.find(";", start)
-    transcript_id = attributes_str[start+1:end-1]
+    # some GFF3 attributes may end without a semi-colon!
+    # we assume that otherwise all attributes will end with a semi-colon
+    if end == -1:
+        end = len(attributes_str)
+    transcript_id = attributes_str[start+is_quote:end-is_quote]
     return transcript_id
     
-def get_transcript_ids(gtf_entries):
-    ret = parallel.apply_df_simple(gtf_entries, get_transcript_id)
+def get_transcript_ids(gtf_entries, attr_name, offset, is_quote):
+    ret = parallel.apply_df_simple(gtf_entries, get_transcript_id, attr_name, offset, is_quote)
     return ret
 
 def get_bed12_entry(gtf_entries):
@@ -101,9 +103,24 @@ def main():
     args = parser.parse_args()
     logging_utils.update_logging(args)
 
-    msg = "Reading GTF file"
+    msg = "Reading annotations file"
     logger.info(msg)
 
+    attr_name = "transcript_id "
+    offset = len(attr_name)
+    is_quote = 1
+    use_gff3_specs = args.gtf.endswith('gff')
+    if use_gff3_specs:
+        msg = """The program will use GFF3 specifications to extract features. In addition, 
+        the stop codon will be removed from the CDSs."""
+        logger.info(msg)
+        # CDS and exons have a "Parent" attribute whose value matches the "ID" attribute of the
+        # corresponding transcript feature, equivalent to "transcript_id" for our purpose.
+        attr_name = "Parent="
+        offset = len(attr_name)
+        is_quote = 0
+
+    # gtf or gff, we use the same fields
     gtf = gtf_utils.read_gtf(args.gtf)
 
     msg = "Extracting exon and CDS features"
@@ -115,13 +132,15 @@ def main():
     exons = gtf[m_exons].copy()
     cds_df = gtf[m_cds].copy()
 
+
     msg = "Extracting CDS transcript ids"
     logger.info(msg)
 
     cds_transcript_ids = parallel.apply_parallel_split(cds_df, args.num_cpus, 
-            get_transcript_ids, progress_bar=True, num_groups=args.num_groups)
+            get_transcript_ids, attr_name, offset, is_quote, progress_bar=True, num_groups=args.num_groups)
     cds_transcript_ids = utils.flatten_lists(cds_transcript_ids)
     cds_df['transcript_id'] = cds_transcript_ids
+
 
     msg = "Calculating CDS genomic start and end positions"
     logger.info(msg)
@@ -140,11 +159,28 @@ def main():
     cds_end_df['id'] = cds_max_end.index
     cds_end_df['cds_end'] = cds_max_end.values
 
+    # Under GFF3 specifications, START and STOP codons are included in the CDS,
+    # so we need to exclude it from the coding region.
+    if use_gff3_specs:
+        strand = cds_groups['strand'].unique()
+        strand_df = pd.DataFrame()
+        strand_df['id'] = strand.index
+        strand_df['strand'] = strand.values
+        cds_start_df = cds_start_df.merge(strand_df, on='id', how='left')
+        cds_end_df = cds_end_df.merge(strand_df, on='id', how='left')
+
+        m_positive = cds_end_df['strand'].apply(lambda x: bool(x == '+'))
+        cds_end_df.loc[m_positive, 'cds_end'] = cds_end_df.loc[m_positive, 'cds_end'] - 3
+        cds_end_df.drop('strand', axis=1, inplace=True)
+        m_negative = cds_start_df['strand'].apply(lambda x: bool(x == '-'))
+        cds_start_df.loc[m_negative, 'cds_start'] = cds_start_df.loc[m_negative, 'cds_start'] + 3
+        cds_start_df.drop('strand', axis=1, inplace=True)
+
     msg = "Extracting exon transcript ids"
     logger.info(msg)
 
     exon_transcript_ids = parallel.apply_parallel_split(exons, args.num_cpus, 
-            get_transcript_ids, progress_bar=True, num_groups=args.num_groups)
+            get_transcript_ids, attr_name, offset, is_quote, progress_bar=True, num_groups=args.num_groups)
     exon_transcript_ids = utils.flatten_lists(exon_transcript_ids)
     exons['transcript_id'] = exon_transcript_ids
 
@@ -163,6 +199,7 @@ def main():
     bed12_df = parallel.apply_parallel_groups(exon_groups, args.num_cpus, 
             get_bed12_entry, progress_bar=True)
     bed12_df = pd.DataFrame(bed12_df)
+
 
     msg = "Joining BED12 entries to CDS information"
     logger.info(msg)

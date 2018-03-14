@@ -194,7 +194,7 @@ def get_length_distribution(bam, progress_bar=False, **kwargs):
     """
     import collections
     import tqdm
-    import misc.utils as utils
+    import misc.pandas_utils as pandas_utils
 
     msg = "Opening alignment file"
     logger.debug(msg)
@@ -232,7 +232,7 @@ def get_length_distribution(bam, progress_bar=False, **kwargs):
     msg = "Converting distribution to data frame"
     logger.debug(msg)
 
-    length_distribution_df = utils.dict_to_dataframe(
+    length_distribution_df = pandas_utils.dict_to_dataframe(
         length_distribution,
         key_name='length',
         value_name='count'

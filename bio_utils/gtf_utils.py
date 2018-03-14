@@ -97,12 +97,12 @@ def write_gtf(data_frame, filename, compress=True, use_default_fields=True, **kw
             gzip (indirectly)
     """
     import csv
-    import misc.utils
+    import misc.pandas_utils
 
     do_not_compress = not compress
 
     if use_default_fields:
-        data_frame = data_frame[gtf_field_names]
+        data_frame = data_frame[gtf_field_names].copy()
 
     start_field = data_frame.columns[3]
     end_field = data_frame.columns[4]
@@ -111,7 +111,7 @@ def write_gtf(data_frame, filename, compress=True, use_default_fields=True, **kw
     data_frame[end_field] = data_frame[end_field].astype(int)
 
     header = ['#{}'.format(c) for c in data_frame.columns]
-    misc.utils.write_df(data_frame, filename, index=False, sep='\t', 
+    misc.pandas_utils.write_df(data_frame, filename, index=False, sep='\t',
         header=header, do_not_compress=do_not_compress, quoting=csv.QUOTE_NONE, **kwargs)
 
 def _get_gtf_entries(bed_entry, feature_type:str, source:str=None, 

@@ -8,6 +8,7 @@ import yaml
 import pyensembl
 
 import misc.utils as utils
+import misc.pandas_utils as pandas_utils
 
 import logging
 import misc.logging_utils as logging_utils
@@ -117,7 +118,7 @@ def main():
 
     msg = "Writing motifs to disk"
     logger.info(msg)
-    utils.write_df(all_motifs_df, args.out, index=False)
+    pandas_utils.write_df(all_motifs_df, args.out, index=False)
 
 
 if __name__ == '__main__':

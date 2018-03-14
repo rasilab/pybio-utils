@@ -55,9 +55,11 @@ bed12-to-gtf <bed> <out> [-s/--source <source>] [-p/--num-cpus <num_cpus>] [--ad
 
 ## Convert gtf to bed12
 
-Convert a gtf file into an equivalent bed12 file. It created bed entries based
-on the `exon` features and `transcript_id` field. It then uses the `CDS`
-features to determine the `thick_start` and `thick_end` values for the bed file.
+Convert a gtf/gff file into an equivalent bed12 file. It creates bed entries based
+on the `exon` features and `transcript_id` field (or `Parent` attribute, whose value matches the `ID` attribute 
+of the corresponding transcript feature, if using GFF3). It then uses the `CDS`
+features to determine the `thick_start` and `thick_end` values for the bed file. Note that
+if a *gff* file is given, the stop codon will automatically be removed from `CDSs`.
 
 ```
 gtf-to-bed12 <gtf> <out>  [--chr-name-file <chr_name_file>] [--exon-feature <exon_feature>] [--cds-feature <cds_feature>] 
@@ -65,7 +67,7 @@ gtf-to-bed12 <gtf> <out>  [--chr-name-file <chr_name_file>] [--exon-feature <exo
 
 ### Command line options
 
-* `gtf`. The gtf file
+* `gtf`. The gtf/gff file
 
 * `out`. The bed12 file
 

@@ -171,6 +171,11 @@ def add_star_options(parser, star_executable:str="STAR",
     star_options.add_argument('--star-read-files-command', help="The system "
         "command to read gzipped files", default=default_read_files_command)
 
+    star_options.add_argument('--star-additional-options', help="A space-delimited "
+        "list of options to pass to star (for the mapping step only). Each option "
+        "must be quoted separately as in \"--starOption value\". If specified, star "
+        "options will override default/config settings.", nargs='*', type=str)
+
 def get_star_options_string(args):
     """ Extract the flags and options specified for STAR added with 
     add_star_options.
@@ -197,5 +202,12 @@ def get_star_options_string(args):
 
     s = ' '.join("{} {}".format(k,shlex.quote(v)) 
                     for k,v in star_options.items())
+
+    # if additional options
+    if args_dict['star_additional_options']:
+        star_additional_options_str = "--star-additional-options {}".format(
+            ' '.join('"' + star_option + '"' for star_option in args_dict['star_additional_options']))
+        s = "{}".format(' '.join([s, star_additional_options_str]))
+
     return s
 

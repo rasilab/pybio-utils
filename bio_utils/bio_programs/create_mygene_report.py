@@ -6,6 +6,7 @@ import pandas as pd
 
 import bio_utils.mygene_utils as mygene_utils
 import misc.utils as utils
+import misc.pandas_utils as pandas_utils
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def main():
     msg = "Writing output"
     logger.info(msg)
 
-    utils.write_df(res_df, args.out, filetype=args.filetype, sheet=args.sheet,
+    pandas_utils.write_df(res_df, args.out, filetype=args.filetype, sheet=args.sheet,
         do_not_compress=args.do_not_compress, index=False)
 
     msg = "Finished"

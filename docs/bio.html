@@ -43,11 +43,11 @@
 <li><p><code>--add-gene-id</code>. If this flag is given, then the <code>id</code> field will be used as the <code>gene_id</code>.</p></li>
 </ul>
 <h2 id="convert-gtf-to-bed12">Convert gtf to bed12</h2>
-<p>Convert a gtf file into an equivalent bed12 file. It created bed entries based on the <code>exon</code> features and <code>transcript_id</code> field. It then uses the <code>CDS</code> features to determine the <code>thick_start</code> and <code>thick_end</code> values for the bed file.</p>
+<p>Convert a gtf/gff file into an equivalent bed12 file. It creates bed entries based on the <code>exon</code> features and <code>transcript_id</code> field (or <code>Parent</code> attribute, whose value matches the <code>ID</code> attribute of the corresponding transcript feature, if using GFF3). It then uses the <code>CDS</code> features to determine the <code>thick_start</code> and <code>thick_end</code> values for the bed file. Note that if a <em>gff</em> file is given, the stop codon will automatically be removed from <code>CDSs</code>.</p>
 <pre><code>gtf-to-bed12 &lt;gtf&gt; &lt;out&gt;  [--chr-name-file &lt;chr_name_file&gt;] [--exon-feature &lt;exon_feature&gt;] [--cds-feature &lt;cds_feature&gt;] </code></pre>
 <h3 id="command-line-options-1">Command line options</h3>
 <ul>
-<li><p><code>gtf</code>. The gtf file</p></li>
+<li><p><code>gtf</code>. The gtf/gff file</p></li>
 <li><p><code>out</code>. The bed12 file</p></li>
 <li><p>[<code>--chr-name-file</code>]. If given, the order in this file will be used to sort the entries’ <code>seqname</code>s. Presumably, this will be the <code>chrName.txt</code> file created by STAR. Default: <code>seqname</code>s are sorted alphabetically.</p></li>
 <li><p>[<code>--exon-feature</code>]. The <code>feature</code>s to count as “exons” for determing the transcript structures. Default: <code>exon</code></p></li>
