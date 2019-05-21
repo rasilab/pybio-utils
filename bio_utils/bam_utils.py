@@ -7,6 +7,7 @@
 import os
 import sys
 import logging
+
 logger = logging.getLogger(__name__)
 
 def check_bam_file(filename, check_index=False, raise_on_error=True, logger=logger):
@@ -78,6 +79,68 @@ def check_bam_file(filename, check_index=False, raise_on_error=True, logger=logg
     # then the file and the index was okay
     return True
 
+
+def sort_bam_file(bam, sorted_bam, args):
+    """ Sort bam file, wrapping a call to "samtools sort" via
+    shell_utils.call_if_not_exists.
+
+    Args:
+        bam (str): path to bam file
+        sorted_bam (str): path to sorted bam file
+        args (namespace): calling arguments
+    """
+
+    import misc.shell_utils as shell_utils
+
+    call = not args.do_not_call
+    keep_delete_files = args.keep_intermediate_files or args.do_not_call
+
+    sam_tmp_str = ""
+    if args.tmp is not None:
+        sam_tmp_dir = os.path.join(args.tmp, "{}_samtools".format(args.name))
+        if not os.path.exists(sam_tmp_dir):
+            os.makedirs(sam_tmp_dir)
+        sam_tmp_str = "-T {}".format(sam_tmp_dir)
+
+    cmd = "samtools sort {} -@{} -o {} {}".format(
+        bam,
+        args.num_cpus,
+        sorted_bam,
+        sam_tmp_str
+    )
+
+    in_files = [bam]
+    out_files = [sorted_bam]
+    to_delete = [bam]
+    file_checkers = {
+        sorted_bam: check_bam_file
+    }
+    shell_utils.call_if_not_exists(cmd, out_files, in_files=in_files,
+        file_checkers=file_checkers, overwrite=args.overwrite, call=call,
+        keep_delete_files=keep_delete_files, to_delete=to_delete)
+
+
+def index_bam_file(bam, args):
+    """ Index bam file, wrapping a call to "samtools index" via
+    shell_utils.call_if_not_exists.
+
+    Args:
+        bam (str): path to bam file
+        args (namespace): calling arguments
+    """
+
+    import misc.shell_utils as shell_utils
+
+    call = not args.do_not_call
+
+    bai = bam + ".bai"
+    cmd = "samtools index -b {} {}".format(bam, bai)
+    in_files = [bam]
+    out_files = [bai]
+    shell_utils.call_if_not_exists(cmd, out_files, in_files=in_files,
+        overwrite=args.overwrite, call=call)
+
+
 def get_pysam_alignment_file(f, mode=None, **kwargs):
     """ This function checks the type of a given object and returns a pysam
         AlignmentFile object. If the object is already an AlignmentFile, it
@@ -97,10 +160,10 @@ def get_pysam_alignment_file(f, mode=None, **kwargs):
 
         Raises:
             TypeError: if f is neither an AlignmentFile nor string
-
-        Imports:
+        Import:
             pysam
     """
+
     import pysam
 
     if isinstance(f, pysam.AlignmentFile):
@@ -265,6 +328,151 @@ def count_uniquely_mapping_reads(bam, logger=logger):
     num_uniquely_aligned_reads = int(res.strip())
     return num_uniquely_aligned_reads
 
+
+def filter_by_unique_tag_value_pair(alignments, unique_tag, unique_value):
+    """Return alignment satisfying a given tag from the SAM optional
+    fields. Standard tags are displayed as TAG:TYPE:VALUE. There is no
+    check on the validity and/or presence of the pair TAG:VALUE.
+        Arguments:
+            alignments: the iterator over the collection of reads
+            unique_tag (str): the SAM TAG
+            unique_value: the SAM VALUE (type must match TYPE)
+        Return:
+            generator
+    """
+
+    for a in alignments:
+        tag = a.get_tag(unique_tag)
+        if tag == unique_value:
+            yield a
+        else:
+            yield None
+
+
+def filter_stranded_by_flag(alignments, strand):
+    """Return alignment satisfying a given orientation, based
+    on the SAM flags. See `filter_stranded_library`.
+        Arguments:
+            alignments: the iterator over the collection of reads
+            strand (str): library strandedness (fr or rf)
+        Return:
+            generator
+        """
+
+    for a in alignments:
+        keep = a.is_reverse
+        if strand == 'fr':
+            keep = not keep
+        if keep:
+            yield a
+        else:
+            yield None
+
+
+def filter_stranded_library(align_in, align_out, strand, logger=logger):
+    """Remove alignments based on library strandedness. Alignments
+    must be in transcript coordinates, otherwise filtering cannot
+    be based only on the SAM flag. This does not filter secondary
+    alignments, if present.
+
+        Arguments:
+            align_in (string) : the "stranded" BAM filename
+
+            align_out (string) : the output BAM filename
+
+            strand (str) : either "fr" (secondstrand) or "rf" (firststrand)
+
+            logger (logging.Logger): a logger to which status messages will
+                be written
+        Return:
+            None
+    """
+
+    import tqdm
+
+    msg = "Filter alignments based on library strandedness."
+    logger.debug(msg)
+
+    strand_choices = ['fr', 'rf']
+    if strand not in strand_choices:
+        msg = "Invalid strand flag, expected one of {}".format(strand_choices)
+        raise ValueError(msg)
+
+    bam = get_pysam_alignment_file(align_in)
+    alignments = bam.fetch()
+    num_alignments = bam.count()
+
+    out_bam = get_pysam_alignment_file(align_out, mode="wb", template=bam)
+
+    for a in tqdm.tqdm(filter_stranded_by_flag(alignments, strand),
+                       leave=True, file=sys.stdout, total=num_alignments):
+        if a is not None:
+            out_bam.write(a)
+    out_bam.close()
+
+
+def remove_multimappers(align_in, align_out, n_map=1, index=True,
+                        logger=logger):
+    """Remove multimappers from align_in and write uniquely mapped reads
+    to align_out, and index that file. This is solely based on the SAM NH
+    attribute, which enumerates multiple alignments of a read starting with 1.
+
+    N.B. If the file is sorted, the sort order is preserved. The file will
+    be indexed only if it is already sorted.
+
+    N.B. This requires the SAM NH tag. If using STAR, default output include
+    NH HI AS nM attributes. See also STAR options --outSAMprimaryFlag and
+    --outSAMmultNmax, which may affect the behaviour of this function.
+
+        Arguments:
+            align_in (string) : the BAM filename which may
+                contain multimappers
+
+            align_out (string) : the BAM filename which contains
+                only the uniquely mapped reads.
+
+            n_map (int) : the SAM NH tag value corresponding to the number
+            of loci a read maps to.
+
+            index (bool) : index the output.
+
+            logger (logging.Logger): a logger to which status messages will
+                be written
+        Return:
+            None
+    """
+
+    import tqdm
+    import misc.shell_utils as shell_utils
+
+    msg = "Removing multimappers."
+    logger.debug(msg)
+
+    bam = get_pysam_alignment_file(align_in)
+    alignments = bam.fetch()
+    num_alignments = bam.count()
+
+    out_bam = get_pysam_alignment_file(align_out, mode="wb", template=bam)
+
+    for a in tqdm.tqdm(filter_by_unique_tag_value_pair(alignments, 'NH', n_map),
+                       leave=True, file=sys.stdout, total=num_alignments):
+        if a is not None:
+            out_bam.write(a)
+    out_bam.close()
+
+    if index:
+        msg = "Attempt to index uniquely mapped reads."
+        logger.debug(msg)
+        try:
+            cmd = "samtools index -b {}".format(align_out)
+            shell_utils.check_call(cmd, call=True)
+        except:
+            msg = ("Failed to index uniquely mapped reads."
+                   "Check if BAM file is sorted!")
+            logger.debug(msg)
+
+
+# temporary keep this function ** need to adjust calls in Rp-Bp, B-tea
 def remove_multimapping_reads(align_in, align_out, call=True, tmp=None, 
             logger=logger):
     """ This functions wraps calls to samtools which remove the multimapping
@@ -335,12 +543,10 @@ def get_five_prime_ends(bam, progress_bar=True, count=True, logger=logger):
         Imports:
             numpy
             pandas
-            pysam
             tqdm
     """
     import numpy as np
     import pandas as pd
-    import pysam
     import tqdm
 
     # first, make sure we have an alignment file

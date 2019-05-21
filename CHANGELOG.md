@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Missing argument for BED6 in `bed_utils.get_all_bed_sequences`.
+- Call to `shell_utils` in `bam_to_wiggle.py`.
+
+### Added
+- Various functionality to `bam_utils` to filter BAM files by tag, flag;
+    rewrite `remove_multimapping_reads` into `remove_multimappers`, the former
+    to be deprecated.
+- Added to bio_programs `create_init_ribo_track.py`.
+
 ## [0.2.6] - 2018-03-14
 ### Added
 - Added to bio_programs `bed_to_bigBed`, `run_signalp` and `run_tmhmm`.

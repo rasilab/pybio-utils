@@ -157,7 +157,7 @@ def convert_to_bigwig(wig_file, out, chr_sizes, args):
         logger.info(msg)
 
         cmd = "wigToBigWig {} {} {}".format(wig_file, size_file, out)
-        utils.check_call(cmd)
+        shell_utils.check_call(cmd)
     finally:
         if args.keep_wig:
             msg = "Keeping size file"

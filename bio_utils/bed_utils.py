@@ -2628,7 +2628,7 @@ def get_bed_sequence(bed_entry, seq_sequence, split_exons=True):
         
     return (header, transcript_sequence)
 
-def get_all_bed_sequences(bed, fasta_file, split_exons=True, progress_bar=True):
+def get_all_bed_sequences(bed, fasta_file, split_exons=True, bed6=False, progress_bar=True):
     """ This function extracts all of the sequences for entries in the given
         bed file. It is mostly a wrapper around get_bed_sequence, so please see
         that function for more information.
@@ -2641,6 +2641,9 @@ def get_all_bed_sequences(bed, fasta_file, split_exons=True, progress_bar=True):
                 chromosome sequences
 
             split_exons (bool): whether to split the exons of the bed entries
+
+            bed6 (bool): assumes BED12+, but if split_exons=False, BED6 may be
+            sufficient.
 
         Returns:
             list of 2-tuples:
@@ -2674,10 +2677,16 @@ def get_all_bed_sequences(bed, fasta_file, split_exons=True, progress_bar=True):
         msg = "The bed file must contain at least four columns."
         raise ValueError(msg)
         
-    if (num_columns < 12) and (not args.bed_4):
-        msg = ("The bed file must contain at least twelve columns unless the "
-            "--bed4 flag is given.")
+    if (num_columns < 12) and (not bed6):
+        msg = ("The bed file must contain at least twelve columns."
+            "If passing a BED6 file, use bed6=True.")
         raise ValueError(msg)
+
+    if bed6:
+        msg = ("The bed6 argument is set to True, hence the exons of"
+               "the bed entries will NOT be split.")
+        logger.warning(msg)
+        split_exons = False
     
     msg = "Opening fasta file"
     logger.debug(msg)

@@ -11,6 +11,7 @@ bio_console_scripts = [
     'count-reads=bio_utils.bio_programs.count_reads:main',
     'create-aligned-read-count-bar-chart=bio_utils.bio_programs.plotting.create_aligned_read_count_bar_chart:main',
     'create-mygene-report=bio_utils.bio_programs.create_mygene_report:main',
+    'create-init-ribo-track=bio_utils.bio_programs.create_init_ribo_track:main',
     'dna-to-aa=bio_utils.bio_programs.dna_to_aa:main',
     'download-srr-files=bio_utils.bio_programs.download_srr_files:main',
     'extract-bed-sequences=bio_utils.bio_programs.extract_bed_sequences:main',

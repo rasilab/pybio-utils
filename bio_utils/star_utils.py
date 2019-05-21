@@ -141,12 +141,13 @@ def read_star_tr_file(filename:str):
     return transcript_info
 
 # make an attempt to guess the correct "read a gzipped file" command
+# keep here for backward compatibility
 default_read_files_command = "zcat"
 if sys.platform.startswith("darwin"):
     default_read_files_command = "gzcat"
 
 def add_star_options(parser, star_executable:str="STAR", 
-        read_files_command:str=default_read_files_command):
+        star_read_files_command:str=default_read_files_command):
     """ Add options to a cmd parser to call STAR.
 
     N.B. This is primarily intended for use with the rp-bp and b-tea projects.
@@ -169,12 +170,14 @@ def add_star_options(parser, star_executable:str="STAR",
         "executable", default=star_executable)
 
     star_options.add_argument('--star-read-files-command', help="The system "
-        "command to read gzipped files", default=default_read_files_command)
+        "command to read gzipped files", default=star_read_files_command)
 
-    star_options.add_argument('--star-additional-options', help="A space-delimited "
-        "list of options to pass to star (for the mapping step only). Each option "
-        "must be quoted separately as in \"--starOption value\". If specified, star "
-        "options will override default/config settings.", nargs='*', type=str)
+    star_options.add_argument('--star-additional-options', help="""A space-delimited
+        list of options to pass to star (for the mapping step only). Each option
+        must be quoted separately as in '"--starOption value"', using hard, then soft 
+        quotes, where "--starOption" is the long parameter name from star, and "value"
+        is the value given to this parameter. If specified, star options will override 
+        default settings.""", nargs='*', type=str)
 
 def get_star_options_string(args):
     """ Extract the flags and options specified for STAR added with 
@@ -197,7 +200,7 @@ def get_star_options_string(args):
     star_options = ['star_executable', 'star_read_files_command']
 
     # create a new dictionary mapping from the flag to the value
-    star_options = {'--{}'.format(o.replace('_', '-')) : args_dict[o] 
+    star_options = {'--{}'.format(o.replace('_', '-')): args_dict[o]
         for o in star_options if args_dict[o] is not None}
 
     s = ' '.join("{} {}".format(k,shlex.quote(v)) 
@@ -206,7 +209,8 @@ def get_star_options_string(args):
     # if additional options
     if args_dict['star_additional_options']:
         star_additional_options_str = "--star-additional-options {}".format(
-            ' '.join('"' + star_option + '"' for star_option in args_dict['star_additional_options']))
+            ' '.join("'" + star_option + "'" for star_option
+                     in args_dict['star_additional_options']))
         s = "{}".format(' '.join([s, star_additional_options_str]))
 
     return s
