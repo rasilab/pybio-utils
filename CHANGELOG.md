@@ -1,16 +1,31 @@
 # Change Log
-All notable changes to the bio tools will be documented in this file.
+All notable changes to the `pbio` package will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/), 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [Unreleased] - started 2019-10-26
+
+*More changes are expected to happen, upgrade packages version, deprecation of some functions/scripts, PyPI support?*
+
+## [1.0.0] - 2019-10-26
+This is a major version change due to reorganisation of the package structure, obtained by merging 
+the defunct pymisc-utils (see [pyllars](https://github.com/bmmalone/pyllars)) and [riboseq-utils](https://github.com/dieterich-lab/riboseq-utils).
+The package name has been changed from `bio_utils` to `pbio` to reflect this change in API.
+
+### Changed
+- Changed `star_utils` to `pgrm_utils` and add functions for cmd parser to call flexbar 
+- Rename ORF files in `ribo.ribo_filenames`, adjust ORF labels in `ribo.ribo_utils`
+- Configure setup() using setup.cfg
 
 ### Fixed
+- Missing parameters in function calls, hard coded defaults
 - Missing argument for BED6 in `bed_utils.get_all_bed_sequences`.
 - Call to `shell_utils` in `bam_to_wiggle.py`.
 
 ### Added
+- New file for ORF labels in `ribo.ribo_filenames`
+- Add backend option to `parallel`, enabling to resort to the old `multiprocessing` backend.
 - Various functionality to `bam_utils` to filter BAM files by tag, flag;
     rewrite `remove_multimapping_reads` into `remove_multimappers`, the former
     to be deprecated.
